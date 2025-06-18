@@ -16,7 +16,7 @@ dependencies:
     - sentence-transformers>=2.2.2
     - faiss-gpu
     - pandas
-    - numpy
+    - "numpy<2.0"
     - datasets
     - requests
     - python-dotenv

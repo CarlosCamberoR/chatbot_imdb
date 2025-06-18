@@ -87,13 +87,12 @@ class ChatbotModel:
                 "model": self.model,
                 "tokenizer": self.tokenizer,
                 "torch_dtype": torch.float16 if self.device == "cuda" else torch.float32,
-                "device_map": "auto" if self.device == "cuda" else None
             }
             
-            if self.device == "cuda":
-                pipeline_kwargs["device"] = 0
-            else:
+            # No especificar device cuando se usa device_map="auto"
+            if self.device == "cpu":
                 pipeline_kwargs["device"] = -1
+            # Para CUDA con device_map, no especificar device explícitamente
             
             self.pipeline = pipeline(
                 "text-generation",
@@ -131,12 +130,20 @@ class ChatbotModel:
             if self.device == "cpu":
                 self.model = self.model.to(self.device)
             
+            # Crear pipeline de respaldo
+            pipeline_kwargs = {
+                "model": self.model,
+                "tokenizer": self.tokenizer,
+                "torch_dtype": torch.float16 if self.device == "cuda" else torch.float32
+            }
+            
+            # Solo especificar device para CPU
+            if self.device == "cpu":
+                pipeline_kwargs["device"] = -1
+            
             self.pipeline = pipeline(
                 "text-generation",
-                model=self.model,
-                tokenizer=self.tokenizer,
-                device=0 if self.device == "cuda" else -1,
-                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
+                **pipeline_kwargs
             )
             
             logger.info("Modelo de respaldo cargado exitosamente")

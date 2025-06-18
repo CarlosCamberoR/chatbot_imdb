@@ -1,12 +1,12 @@
 streamlit
 transformers>=4.30.0
-torch>=2.0.0
-torchvision
-torchaudio
+torch>=2.0.0 --index-url https://download.pytorch.org/whl/cu118
+torchvision --index-url https://download.pytorch.org/whl/cu118
+torchaudio --index-url https://download.pytorch.org/whl/cu118
 sentence-transformers>=2.2.2
 faiss-gpu
 pandas
-numpy
+numpy<2.0
 datasets
 requests
 python-dotenv
