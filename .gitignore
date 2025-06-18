@@ -1,0 +1,31 @@
+# Archivos de datos grandes
+data/*.tsv
+data/*.txt
+
+# Archivos de cache
+cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Archivos de entorno
+.env
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de logs
+*.log
+
+# Modelos y archivos grandes
+models/
+*.bin
+*.safetensors

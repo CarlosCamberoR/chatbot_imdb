@@ -94,30 +94,14 @@ class RAGChatbot:
         try:
             logger.info(f"Procesando consulta: {user_query}")
             
-            # 1. Verificar si la consulta está relacionada con IMDB
-            if not self.chatbot_model.is_imdb_related(user_query):
-                return {
-                    "response": ("Lo siento, solo puedo responder preguntas relacionadas con películas, "
-                               "series y la base de datos de IMDB. ¿Tienes alguna pregunta sobre cine?"),
-                    "sources": [],
-                    "error": None
-                }
-            
-            # 2. Recuperar documentos relevantes
+            # 1. Recuperar documentos relevantes
             relevant_docs = self.retriever.retrieve(
                 user_query, 
                 k=self.top_k, 
                 method="hybrid"
             )
             
-            if not relevant_docs:
-                return {
-                    "response": "No encontré información relevante en la base de datos de IMDB para tu consulta.",
-                    "sources": [],
-                    "error": None
-                }
-            
-            # 3. Generar respuesta usando el modelo
+            # 2. Generar respuesta usando el modelo (sin filtros previos)
             response = self.chatbot_model.generate_response(
                 query=user_query,
                 context=relevant_docs,

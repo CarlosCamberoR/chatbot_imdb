@@ -138,7 +138,7 @@ def main():
             st.rerun()
     
     # Inicializar chatbot
-    with st.spinner("Inicializando sistema RAG optimizado para RTX 4070... Esto puede tomar unos minutos la primera vez."):
+    with st.spinner("Inicializando sistema RAG con OpenHermes-2.5-Mistral-7B... Esto puede tomar unos minutos la primera vez."):
         chatbot, success = initialize_chatbot()
     
     if not success:
@@ -159,13 +159,17 @@ def main():
         st.metric("Documentos en Base", docs_count)
     
     with col3:
-        modelo = "DialoGPT-Large" if "large" in stats.get("modelo_activo", "").lower() else "Modelo Activo"
+        modelo = "OpenHermes-2.5-Mistral-7B"
         if stats["modelo_activo"]:
-            modelo = stats["modelo_activo"].split("/")[-1]
+            modelo_completo = stats["modelo_activo"]
+            if "OpenHermes" in modelo_completo:
+                modelo = "OpenHermes-2.5-Mistral-7B"
+            else:
+                modelo = modelo_completo.split("/")[-1]
         st.metric("Modelo", modelo)
     
     with col4:
-        kb_status = "✅ RTX Optimizada" if stats["base_conocimiento_lista"] else "❌ Error"
+        kb_status = "✅ OpenHermes Optimizada" if stats["base_conocimiento_lista"] else "❌ Error"
         st.metric("Base de Conocimiento", kb_status)
     
     st.divider()
@@ -178,7 +182,7 @@ def main():
         st.session_state.messages = []
         st.session_state.messages.append({
             "role": "assistant",
-            "content": "¡Hola! Soy tu asistente de IMDB. Puedo ayudarte con información sobre películas, series, actores, directores y más. ¿En qué puedo ayudarte?"
+            "content": "¡Hola! Soy tu asistente de IMDB potenciado por OpenHermes-2.5-Mistral-7B. Puedo ayudarte con información detallada sobre películas, series, actores, directores y cualquier tema relacionado con el cine. ¿En qué puedo ayudarte hoy?"
         })
     
     # Mostrar historial de chat
@@ -256,16 +260,16 @@ def main():
         with st.container():
             st.markdown("""
             <div class="stats-box">
-                <h4>� Sistema Optimizado RTX 4070:</h4>
+                <h4>🤖 Sistema OpenHermes-2.5-Mistral-7B:</h4>
                 <ul>
-                    <li><strong>Modelo:</strong> DialoGPT-Large (respuestas más naturales)</li>
+                    <li><strong>Modelo:</strong> OpenHermes-2.5-Mistral-7B (conversacional avanzado)</li>
                     <li><strong>Embeddings:</strong> MPNet-v2 (mejor comprensión semántica)</li>
-                    <li><strong>Base de datos:</strong> 25,000 películas de IMDB</li>
-                    <li><strong>GPU:</strong> Procesamiento acelerado en VRAM</li>
-                    <li><strong>Respuestas:</strong> Hasta 800 tokens más detalladas</li>
+                    <li><strong>Base de datos:</strong> 25,000+ películas de IMDB</li>
+                    <li><strong>GPU:</strong> Cuantización 4-bit optimizada para RTX 4070</li>
+                    <li><strong>Respuestas:</strong> Hasta 1200 tokens conversacionales</li>
                     <li><strong>Retrieval:</strong> 8 documentos por consulta</li>
                 </ul>
-                <h4>�💡 Consejos de uso:</h4>
+                <h4>💡 Consejos de uso:</h4>
                 <ul>
                     <li>Pregunta sobre películas específicas, actores o directores</li>
                     <li>Puedes preguntar sobre géneros, años o ratings</li>
@@ -279,8 +283,8 @@ def main():
     st.divider()
     st.markdown("""
     <div style="text-align: center; color: #666; font-size: 0.9em;">
-        🎬 Chatbot IMDB - Optimizado para RTX 4070 8GB<br>
-        🚀 DialoGPT-Large + MPNet-v2 | 25K películas | GPU Acelerado<br>
+        🎬 Chatbot IMDB - Potenciado por OpenHermes-2.5-Mistral-7B<br>
+        🚀 OpenHermes + MPNet-v2 | 25K+ películas | Cuantización 4-bit<br>
         ⚡ Powered by Hugging Face, FAISS y Streamlit
     </div>
     """, unsafe_allow_html=True)
