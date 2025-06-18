@@ -1,0 +1,29 @@
+name: chatbot_imdb
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+  - defaults
+dependencies:
+  - python=3.10
+  - pytorch>=2.0.0
+  - pytorch-cuda=11.8
+  - cudatoolkit
+  - pip
+  - pip:
+    - streamlit
+    - transformers>=4.30.0
+    - sentence-transformers>=2.2.2
+    - faiss-gpu
+    - pandas
+    - numpy
+    - datasets
+    - requests
+    - python-dotenv
+    - beautifulsoup4
+    - langchain
+    - langchain-community
+    - langchain-huggingface
+    - rank_bm25
+    - accelerate
+    - bitsandbytes
