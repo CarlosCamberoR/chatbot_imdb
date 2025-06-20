@@ -3,10 +3,33 @@ import os
 import time
 from rag_system import RAGChatbot
 import logging
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Configuración de modelos y parámetros desde .env
+MODEL_CONFIG = {
+    "llm_model": os.getenv("MODEL_NAME", "teknium/OpenHermes-2.5-Mistral-7B"),
+    "embedding_model": os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2"),
+    "max_movies": int(os.getenv("MAX_MOVIES", "50000")),
+    "max_response_length": int(os.getenv("MAX_RESPONSE_LENGTH", "1200")),
+    "temperature": float(os.getenv("TEMPERATURE", "0.7")),
+    "top_k": int(os.getenv("TOP_K", "8")),
+    "quantization": os.getenv("QUANTIZATION", "4bit"),
+    "load_in_4bit": os.getenv("LOAD_IN_4BIT", "true").lower() == "true"
+}
+
+# Nombres para mostrar en la UI
+UI_NAMES = {
+    "llm_display": "OpenHermes-2.5-Mistral-7B",
+    "embedding_display": "MPNet-v2",
+    "system_name": "Chatbot RAG IMDB - Sistema Avanzado de Consulta Cinematográfica"
+}
 
 # Configuración de la página
 st.set_page_config(
@@ -67,19 +90,18 @@ def initialize_chatbot():
     """Inicializa el chatbot optimizado para RTX 4070 (solo una vez)"""
     chatbot = RAGChatbot()
     # Usar configuración optimizada desde .env
-    max_movies = int(os.getenv("MAX_MOVIES", "25000"))
-    success = chatbot.initialize(max_movies=max_movies, use_cache=True)
+    success = chatbot.initialize(max_movies=MODEL_CONFIG["max_movies"], use_cache=True)
     return chatbot, success
 
 def main():
     # Header principal
-    st.markdown("""
+    st.markdown(f"""
     <div class="main-header">
         <h1 style="color: white; text-align: center; margin: 0;">
-            🎬 Chatbot IMDB - Asistente de Películas
+            🎬 {UI_NAMES["system_name"]}
         </h1>
         <p style="color: white; text-align: center; margin: 0;">
-            Pregúntame cualquier cosa sobre películas, series y la base de datos de IMDB
+            Potenciado por {UI_NAMES["llm_display"]} con RAG inteligente | {MODEL_CONFIG["max_movies"]:,}+ películas de IMDB
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -106,9 +128,9 @@ def main():
         
         # Configuración del modelo
         st.subheader("🤖 Configuración del Modelo")
-        temperature = st.slider("Temperatura", 0.1, 1.0, 0.7, 0.1)
-        max_length = st.slider("Longitud máxima de respuesta", 200, 1200, 800, 50)
-        top_k = st.slider("Número de documentos a recuperar", 3, 15, 8)
+        temperature = st.slider("Temperatura", 0.1, 1.0, MODEL_CONFIG["temperature"], 0.1)
+        max_length = st.slider("Longitud máxima de respuesta", 500, 1200, MODEL_CONFIG["max_response_length"], 50)
+        top_k = st.slider("Número de documentos a recuperar", 3, 15, MODEL_CONFIG["top_k"])
         
         # Actualizar variables de entorno
         os.environ["TEMPERATURE"] = str(temperature)
@@ -138,7 +160,8 @@ def main():
             st.rerun()
     
     # Inicializar chatbot
-    with st.spinner("Inicializando sistema RAG con OpenHermes-2.5-Mistral-7B... Esto puede tomar unos minutos la primera vez."):
+    spinner_text = f"Inicializando sistema RAG con {UI_NAMES['llm_display']} y cuantización {MODEL_CONFIG['quantization']}... Esto puede tomar unos minutos la primera vez."
+    with st.spinner(spinner_text):
         chatbot, success = initialize_chatbot()
     
     if not success:
@@ -159,17 +182,22 @@ def main():
         st.metric("Documentos en Base", docs_count)
     
     with col3:
-        modelo = "OpenHermes-2.5-Mistral-7B"
+        # Extraer nombre corto del modelo para mostrar
+        modelo_display = UI_NAMES["llm_display"]
         if stats["modelo_activo"]:
             modelo_completo = stats["modelo_activo"]
             if "OpenHermes" in modelo_completo:
-                modelo = "OpenHermes-2.5-Mistral-7B"
+                modelo_display = UI_NAMES["llm_display"]
+            elif "zephyr" in modelo_completo.lower():
+                modelo_display = "Zephyr-7B-Beta"
+            elif "DialoGPT" in modelo_completo:
+                modelo_display = "DialoGPT-Large"
             else:
-                modelo = modelo_completo.split("/")[-1]
-        st.metric("Modelo", modelo)
+                modelo_display = modelo_completo.split("/")[-1]
+        st.metric("Modelo", modelo_display)
     
     with col4:
-        kb_status = "✅ OpenHermes Optimizada" if stats["base_conocimiento_lista"] else "❌ Error"
+        kb_status = f"✅ {UI_NAMES['embedding_display']} Optimizada" if stats["base_conocimiento_lista"] else "❌ Error"
         st.metric("Base de Conocimiento", kb_status)
     
     st.divider()
@@ -180,9 +208,20 @@ def main():
     # Inicializar historial de chat en session state
     if "messages" not in st.session_state:
         st.session_state.messages = []
+        welcome_message = f"""¡Hola! Soy tu asistente cinematográfico avanzado potenciado por {UI_NAMES["llm_display"]} con tecnología RAG. Tengo acceso a más de {MODEL_CONFIG["max_movies"]:,} películas y series de IMDB con información detallada sobre actores, directores, géneros, calificaciones y mucho más. 
+
+🎬 **¿En qué puedo ayudarte hoy?**
+- Información sobre películas específicas
+- Recomendaciones personalizadas
+- Datos de actores y directores
+- Análisis de géneros y tendencias
+- Comparaciones entre películas
+
+¡Pregúntame lo que quieras sobre el mundo del cine!"""
+        
         st.session_state.messages.append({
             "role": "assistant",
-            "content": "¡Hola! Soy tu asistente de IMDB potenciado por OpenHermes-2.5-Mistral-7B. Puedo ayudarte con información detallada sobre películas, series, actores, directores y cualquier tema relacionado con el cine. ¿En qué puedo ayudarte hoy?"
+            "content": welcome_message
         })
     
     # Mostrar historial de chat
@@ -199,7 +238,7 @@ def main():
                             st.markdown(f"```\n{source}\n```")
     
     # Input del usuario
-    if prompt := st.chat_input("Escribe tu pregunta sobre películas o IMDB..."):
+    if prompt := st.chat_input("Pregúntame sobre películas, actores, directores o cualquier tema cinematográfico..."):
         # Añadir mensaje del usuario al historial
         st.session_state.messages.append({"role": "user", "content": prompt})
         
@@ -258,36 +297,42 @@ def main():
     with col2:
         st.subheader("📊 Información del Sistema")
         with st.container():
-            st.markdown("""
+            quantization_text = f"{MODEL_CONFIG['quantization']}" if MODEL_CONFIG["load_in_4bit"] else "FP16"
+            stats_html = f"""
             <div class="stats-box">
-                <h4>🤖 Sistema OpenHermes-2.5-Mistral-7B:</h4>
+                <h4>🤖 Sistema {UI_NAMES["llm_display"]}:</h4>
                 <ul>
-                    <li><strong>Modelo:</strong> OpenHermes-2.5-Mistral-7B (conversacional avanzado)</li>
-                    <li><strong>Embeddings:</strong> MPNet-v2 (mejor comprensión semántica)</li>
-                    <li><strong>Base de datos:</strong> 25,000+ películas de IMDB</li>
-                    <li><strong>GPU:</strong> Cuantización 4-bit optimizada para RTX 4070</li>
-                    <li><strong>Respuestas:</strong> Hasta 1200 tokens conversacionales</li>
-                    <li><strong>Retrieval:</strong> 8 documentos por consulta</li>
+                    <li><strong>Modelo:</strong> {UI_NAMES["llm_display"]} (conversacional avanzado)</li>
+                    <li><strong>Embeddings:</strong> {UI_NAMES["embedding_display"]} (comprensión semántica superior)</li>
+                    <li><strong>Base de datos:</strong> {MODEL_CONFIG["max_movies"]:,}+ películas y series de IMDB</li>
+                    <li><strong>GPU:</strong> Cuantización {quantization_text} optimizada para RTX 4070</li>
+                    <li><strong>Respuestas:</strong> Hasta {MODEL_CONFIG["max_response_length"]} tokens conversacionales</li>
+                    <li><strong>Retrieval:</strong> {MODEL_CONFIG["top_k"]} documentos híbridos (FAISS + BM25)</li>
+                    <li><strong>Filtrado:</strong> Inteligente para temas cinematográficos</li>
                 </ul>
-                <h4>💡 Consejos de uso:</h4>
+                <h4>💡 Tipos de consultas soportadas:</h4>
                 <ul>
-                    <li>Pregunta sobre películas específicas, actores o directores</li>
-                    <li>Puedes preguntar sobre géneros, años o ratings</li>
-                    <li>El sistema funciona mejor con preguntas específicas</li>
-                    <li>Usa la búsqueda de películas para encontrar títulos exactos</li>
+                    <li><strong>Películas:</strong> "¿Qué me puedes decir sobre Inception?"</li>
+                    <li><strong>Actores:</strong> "Filmografía de Leonardo DiCaprio"</li>
+                    <li><strong>Directores:</strong> "Mejores películas de Christopher Nolan"</li>
+                    <li><strong>Géneros:</strong> "Películas de ciencia ficción de los 90"</li>
+                    <li><strong>Recomendaciones:</strong> "Recomiéndame una película familiar"</li>
+                    <li><strong>Comparaciones:</strong> "Diferencias entre Batman (1989) y The Dark Knight"</li>
                 </ul>
             </div>
-            """, unsafe_allow_html=True)
+            """
+            st.markdown(stats_html, unsafe_allow_html=True)
     
     # Footer
     st.divider()
-    st.markdown("""
+    footer_text = f"""
     <div style="text-align: center; color: #666; font-size: 0.9em;">
-        🎬 Chatbot IMDB - Potenciado por OpenHermes-2.5-Mistral-7B<br>
-        🚀 OpenHermes + MPNet-v2 | 25K+ películas | Cuantización 4-bit<br>
-        ⚡ Powered by Hugging Face, FAISS y Streamlit
+        🎬 {UI_NAMES["system_name"]}<br>
+        🚀 {UI_NAMES["llm_display"]} + {UI_NAMES["embedding_display"]} | {MODEL_CONFIG["max_movies"]:,}+ películas | Cuantización {MODEL_CONFIG["quantization"]} | Filtrado Inteligente<br>
+        ⚡ Powered by Hugging Face, FAISS, BM25 y Streamlit
     </div>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(footer_text, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
