@@ -18,8 +18,8 @@ class RAGChatbot:
         
         # Configuración desde variables de entorno
         self.hf_token = os.getenv("HUGGINGFACE_TOKEN")
-        self.model_name = os.getenv("MODEL_NAME", "microsoft/DialoGPT-medium")
-        self.embedding_model = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+        self.model_name = os.getenv("MODEL_NAME", "teknium/OpenHermes-2.5-Mistral-7B")
+        self.embedding_model = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2")
         self.max_response_length = int(os.getenv("MAX_RESPONSE_LENGTH", "500"))
         self.temperature = float(os.getenv("TEMPERATURE", "0.7"))
         self.top_k = int(os.getenv("TOP_K", "5"))
@@ -37,7 +37,7 @@ class RAGChatbot:
         try:
             # Usar configuración del .env para max_movies
             if max_movies is None:
-                max_movies = int(os.getenv("MAX_MOVIES", "25000"))
+                max_movies = int(os.getenv("MAX_MOVIES", "50000"))
             
             # 1. Inicializar cargador de IMDB
             logger.info("Inicializando cargador de IMDB...")
